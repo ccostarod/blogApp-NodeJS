@@ -7,6 +7,7 @@
     const mongoose = require('mongoose');
     const session = require('express-session')
     const flash = require('connect-flash')
+    
     //Ao conectarmos um grupo de rotas ao app.js, criamos um prefixo, nesse caso 'admin', portanto, para acessar as rotas utilizamos: http://localhost:8081/admin/
         const admin = require('./routes/admin')
 
@@ -22,7 +23,7 @@
     
     //middleware 
             app.use((req, res, next) => {
-                //res.locals cria uma varivel global
+                //res.locals cria uma   varivel global
                 res.locals.success_msg = req.flash("success_msg");
                 res.locals.error_msg = req.flash("error_msg");
                 next();
