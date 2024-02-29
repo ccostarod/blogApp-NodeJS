@@ -3,11 +3,31 @@
     const handlebars = require('express-handlebars');
     const bodyParser = require('body-parser');
     const app = express();
+    const path = require('path');
+    const mongoose = require('mongoose');
+    const session = require('express-session')
+    const flash = require('connect-flash')
     //Ao conectarmos um grupo de rotas ao app.js, criamos um prefixo, nesse caso 'admin', portanto, para acessar as rotas utilizamos: http://localhost:8081/admin/
         const admin = require('./routes/admin')
-    const mongoose = require('mongoose');
-    const path = require('path')
+
 //configs
+    //session e flash:
+            app.use(session({
+                secret: "senha",
+                resave: true,
+                saveUninitialized: true
+            }));
+
+            app.use(flash());
+    
+    //middleware 
+            app.use((req, res, next) => {
+                //res.locals cria uma varivel global
+                res.locals.success_msg = req.flash("success_msg");
+                res.locals.error_msg = req.flash("error_msg");
+                next();
+            })
+            
     //body-parser
         app.use(express.urlencoded({ extended: true }))
         app.use(express.json())
@@ -24,9 +44,12 @@
     //public
         //Estamos falando pro express que a pasta que esta guardando todos os arquivos estaticos eh a 'public'
             app.use(express.static(path.join(__dirname + "/public")))
+    
+        
 //rotas
     //rotas com prefixo admin
         app.use('/admin', admin);
+
 //outros
     const port = 8081;
     app.listen(port, () => {
