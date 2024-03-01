@@ -28,6 +28,7 @@ router.get('/categorias/add', (req,res) =>{
     res.render("admin/addcategorias")
 })
 
+
 router.post('/categorias/nova', (req,res) => {
 
     var erros = []
@@ -63,6 +64,8 @@ router.post('/categorias/nova', (req,res) => {
     }   
 
 })
+
+
 
 router.get("/categorias/edit/:id", (req,res) => {
         Categoria.findOne({_id:req.params.id}).then((categoria) => {
@@ -121,13 +124,24 @@ router.post("/categorias/edit", (req, res) => {
 })
 
 router.post("/categorias/deletar", (req,res) => {
-    Categoria.deleteOne({_id: req.body.id}).then(() => {
-        req.flash("success_msg", "Categoria deletada com sucesso!")
-        res.redirect("/admin/categorias")
+    Postagem.findOne({categoria: req.body.id}).then((postagem) => {
+        if(postagem) {
+            req.flash("error_msg", "Categoria sendo usada por uma postagem, primeiro exclua a postagem.")
+            res.redirect("/admin/categorias")
+        } else {
+            Categoria.deleteOne({_id: req.body.id}).then(() => {
+                req.flash("success_msg", "Categoria deletada com sucesso!")
+                res.redirect("/admin/categorias")
+            }).catch((err) => {
+                req.flash("error_msg", "Houve um erro ao deletar a categoria!")
+                res.redirect("/admin/categorias")
+                console.log("Erro ao deletar categoria: ", err)
+            })
+        }
     }).catch((err) => {
-        req.flash("error_msg", "Houve um erro ao deletar a categoria!")
+        req.flash("error_msg", "Houve um erro ao verificar a categoria!")
         res.redirect("/admin/categorias")
-        console.log("Erro ao deletar categoria: ", err)
+        console.log("Erro ao verificar categoria: ", err)
     })
 })
 
