@@ -71,7 +71,12 @@ router.post('/registro', (req, res) => {
             console.log("Houve um erro interno: " + err)
         })
     }
-
 })
+
+router.get("/login", (req, res) =>{
+    res.render('usuarios/login')
+})
+
+
 
 module.exports = router;
