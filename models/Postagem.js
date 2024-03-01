@@ -19,7 +19,7 @@ const Postagem = new Schema({
         required: true
     }, 
     categoria: {
-        type: Schema.Types.ObjectId, //Vai referenciar um id de uma Categoria
+        type: Schema.Types.ObjectId, //Vai referenciar um id de uma Categoria, eh possivel usar o populate
         ref: 'categorias',
         required: true
     },

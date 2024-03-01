@@ -2,7 +2,9 @@ const router = require('express').Router(); //Usamos o componente Router() para 
 //Eh dessa forma que se usa um model vinculado ao mongodb que está externo ao arquivo principal:
     const mongoose = require('mongoose');
     require('../models/Categoria');
+    require('../models/Postagem')
     const Categoria = mongoose.model('categorias');
+    const Postagem = mongoose.model('postagens');
 //em vez de app.get usaremos router
 router.get('/', (req, res) => {
     res.render('admin/index')
@@ -18,6 +20,7 @@ router.get('/categorias', (req,res) => {
     }).catch((err) => {
         req.flash("error_msg", "Houve um erro ao listar as categorias: " +err)
         res.redirect("/admin")
+        console.log("Houve um erro ao listar as categorias: " + err)
     })
 });
 
@@ -54,7 +57,8 @@ router.post('/categorias/nova', (req,res) => {
             res.redirect("/admin/categorias")
         }).catch((err) => {
             req.flash("error_msg", 'Houve um erro ao salvar a categoria, tente novamente')
-            res.redirect('/admin')
+            res.redirect('/admin/categorias')
+            console.log("Houve um erro ao salvar a categoria: " + err)
         })
     }   
 
@@ -90,6 +94,7 @@ router.post("/categorias/edit", (req, res) => {
             }).catch((err) => {
                 req.flash("error_msg", "Erro ao pegar os dados")
                 res.redirect("admin/categorias")
+                console.log("Erro ao pegar dados de edicao: ", err)
             })
             
         } else {
@@ -104,12 +109,14 @@ router.post("/categorias/edit", (req, res) => {
             }).catch((err) => {
                 req.flash("error_msg", "Erro ao salvar a edição da categoria")
                 res.redirect("admin/categorias")
+                console.log("Erro ao salvar a edição da categoria: ", err)
             })
 
         }
     }).catch((err) => {
         req.flash("error_msg", "Erro ao editar a categoria")
         req.redirect("/admin/categorias")
+        console.log("Erro ao editar categoria: ", err)
     })
 })
 
@@ -120,11 +127,19 @@ router.post("/categorias/deletar", (req,res) => {
     }).catch((err) => {
         req.flash("error_msg", "Houve um erro ao deletar a categoria!")
         res.redirect("/admin/categorias")
+        console.log("Erro ao deletar categoria: ", err)
     })
 })
 
 router.get("/postagens", (req,res) => {
-    res.render("admin/postagens")
+    Postagem.find().lean().populate("categoria").sort({data:"desc"}).then((postagens) => {
+        res.render("admin/postagens", {postagens: postagens})
+    }).catch((err) => {
+        req.flash("error_msg", "Houve um erro ao listar as postagens");
+        res.redirect("/admin")
+        console.log("Erro ao carregar postagens: ", err)
+    })
+    
 })
 
 router.get("/postagens/add", (req, res) => {
@@ -133,7 +148,133 @@ router.get("/postagens/add", (req, res) => {
     }).catch((err) => {
         req.flash("error_msg", "Houve um erro ao carregar o formulario!")
         res.redirect("/admin")
+        console.log("Erro ao carregar formulario de postagens: ", err)
     })
 })
+
+router.post('/postagens/nova', (req, res) => {
+    var erros = []
+    if (req.body.categoria == 0){
+        erros.push({texto: "Categoria invalida, registre uma categoria!"})
+    }
+
+    if (!req.body.titulo || !req.body.slug || !req.body.descricao || !req.body.conteudo){
+        erros.push({texto: "Informação(ões) inválida(s)"})
+    }
+    if (req.body.descricao.length < 2) {
+        erros.push({texto: "Essa descrição é muito curta, tente novamente com uma descrição maior!"})
+    }
+    if (req.body.conteudo.length < 2) {
+        erros.push({texto: "Esse conteúdo é muito curto, tente novamente com um conteúdo maior!"})
+    }
+    if (erros.length > 0) {
+        res.render("admin/addpostagens", {erros : erros})
+    }
+    else{
+        const novaPostagem = {
+            titulo: req.body.titulo,
+            slug: req.body.slug,
+            descricao: req.body.descricao,
+            conteudo: req.body.conteudo,
+            categoria: req.body.categoria
+        }
+        new Postagem(novaPostagem).save().then(() => {
+            req.flash("success_msg", 'Postagem criada com sucesso!')
+            res.redirect("/admin/postagens")
+        }).catch((err) => {
+            req.flash("error_msg", "Houve um erro ao salvar postagem, tente novamente")
+            res.redirect('/admin/postagens')
+            console.log("Erro ao salvar nova postagem: ", err)
+        })
+    }
+    
+})
+
+router.get("/postagens/edit/:id", (req, res) => {
+    Postagem.findOne({_id:req.params.id}).lean().then((postagem) => {
+        Categoria.find().lean().then((categorias) => {
+            res.render("admin/editpostagens", {postagem: postagem, categorias: categorias});
+        }).catch((err) => {
+            req.flash("error_msg", "Houve um erro ao listar as categorias");
+            res.redirect("/admin/postagens");
+        });
+    }).catch((err) => {
+        req.flash("error_msg", 'Esta postagem não existe');
+        res.redirect("/admin/postagens");
+    });
+});
+
+
+// Define uma rota POST para "/postagens/edit"
+router.post("/postagens/edit", (req, res) => {
+    // Cria um array vazio para armazenar possíveis erros
+    var erros = []
+
+    // Verifica se a categoria é inválida (0) e, se for, adiciona um erro ao array
+    if (req.body.categoria == 0){
+        erros.push({texto: "Categoria invalida, registre uma categoria!"})
+    }
+
+    // Verifica se algum dos campos obrigatórios está vazio e, se estiver, adiciona um erro ao array
+    if (!req.body.titulo || !req.body.slug || !req.body.descricao || !req.body.conteudo){
+        erros.push({texto: "Informação(ões) inválida(s)"})
+    }
+
+    // Verifica se a descrição é muito curta e, se for, adiciona um erro ao array
+    if (req.body.descricao.length < 2) {
+        erros.push({texto: "Essa descrição é muito curta, tente novamente com uma descrição maior!"})
+    }
+
+    // Verifica se o conteúdo é muito curto e, se for, adiciona um erro ao array
+    if (req.body.conteudo.length < 2) {
+        erros.push({texto: "Esse conteúdo é muito curto, tente novamente com um conteúdo maior!"})
+    }
+
+    // Se houver algum erro, busca as categorias e renderiza a página de edição de postagens com os erros e os dados do formulário
+    if (erros.length > 0) {
+        Categoria.find().lean().then((categorias) => {
+            res.render("admin/editpostagens", {erros : erros, postagem: req.body, categorias: categorias})
+        }).catch((err) => {
+            req.flash("error_msg", "Erro ao listar categorias");
+            res.redirect("/admin/postagens");
+        });
+    }
+    // Se não houver erros, busca a postagem pelo ID e atualiza os dados
+    else{
+        Postagem.findOne({_id: req.body.id}).then((postagem) => {
+            postagem.titulo = req.body.titulo;
+            postagem.slug = req.body.slug;
+            postagem.descricao = req.body.descricao;
+            postagem.conteudo = req.body.conteudo;
+            postagem.categoria = req.body.categoria;
+
+            // Salva a postagem e redireciona para a página de postagens com uma mensagem de sucesso
+            postagem.save().then(() => {
+                req.flash("success_msg", "Postagem editada com sucesso!");
+                res.redirect("/admin/postagens");
+            // Se houver um erro ao salvar a postagem, redireciona para a página de postagens com uma mensagem de erro
+            }).catch((err) => {
+                req.flash("error_msg", "Erro ao salvar a edição da postagem");
+                res.redirect("/admin/postagens");
+            });
+        // Se houver um erro ao buscar a postagem, redireciona para a página de postagens com uma mensagem de erro
+        }).catch((err) => {
+            req.flash("error_msg", "Erro ao editar a postagem");
+            res.redirect("/admin/postagens");
+        });
+    }
+});
+
+router.get("/postagens/deletar/:id", (req,res) => {
+    Postagem.findByIdAndDelete({_id: req.params.id}).then(() => {
+        req.flash("success_msg", "Postagem deletada com sucesso!")
+        res.redirect("/admin/postagens")
+    }).catch((err) => {
+        req.flash("error_msg", "Houve um erro interno!")
+        console.log("Houve um erro interno: ", err);
+    })
+})
+
+
 
 module.exports = router;

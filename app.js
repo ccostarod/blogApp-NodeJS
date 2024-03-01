@@ -7,7 +7,8 @@
     const mongoose = require('mongoose');
     const session = require('express-session')
     const flash = require('connect-flash')
-    
+    require('./models/Postagem')
+    const Postagem = mongoose.model('postagens')
     //Ao conectarmos um grupo de rotas ao app.js, criamos um prefixo, nesse caso 'admin', portanto, para acessar as rotas utilizamos: http://localhost:8081/admin/
         const admin = require('./routes/admin')
 
@@ -50,7 +51,19 @@
 //rotas
     //rotas com prefixo admin
         app.use('/admin', admin);
+    app.get('/', (req,res) => {
+        Postagem.find().lean().populate("categoria").sort({data: "desc"}).then((postagens)=>{
+            res.render('index', {postagens: postagens})
+        }).catch((err) => {
+            req.flash("error_msg", "Houve um erro interno");
+            res.redirect("/404")
+        })
+        
+    })
 
+    app.get("/404", (req,res) => {
+        res.send('Erro 404!')
+    })
 //outros
     const port = 8081;
     app.listen(port, () => {
