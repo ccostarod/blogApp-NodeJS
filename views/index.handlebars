@@ -1,9 +1,18 @@
 <div class="jumbotron">
-  <h1 class="display-4">Bem-vindo ao BlogApp!</h1>
-  <p class="lead">Olá, esse é um simples blog feito em NodeJS, juntamento com Express e MongoDB</p>
-  <hr class="my-4">
-  <p>Aqui você encontrará informações sobre o mundo da tecnlogia. Fique por dentro</p>
-  <a class="btn btn-primary btn-lg" href="#" role="button">Crie sua conta!</a>
+    {{#if user}}
+        <h2 class="display-4">Bem-vindo ao BlogApp, {{user.nome}}!</h2>
+        {{#if user.eAdmin}}
+            <a class="btn btn-primary btn-lg" href="/admin" role="button">Gerenciar</a>
+        {{/if}}
+    {{else}}
+        <h1 class="display-4">Bem-vindo ao BlogApp!</h1>
+    {{/if}}
+    <p class="lead">Olá, esse é um simples blog feito em NodeJS, juntamento com Express e MongoDB, desenvolvido por Rodrigo (admin)</p>
+    <hr class="my-4">
+    <p>Aqui você encontrará informações sobre o mundo da tecnlogia. Fique por dentro</p>
+    {{#unless user}}
+        <a class="btn btn-primary btn-lg" href="/usuarios/registro" role="button">Crie sua conta!</a>
+    {{/unless}}
 </div>
 <hr>
 <h2>últimas postagens: </h2>

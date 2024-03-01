@@ -11,17 +11,25 @@
     const Postagem = mongoose.model('postagens')
     require("./models/Categoria")
     const Categoria = mongoose.model('categorias')
+    const passport = require('passport')
+    require("./config/auth")(passport)
+    
+
     //Ao conectarmos um grupo de rotas ao app.js, criamos um prefixo, nesse caso 'admin' e 'usuarios', portanto, para acessar as rotas utilizamos: http://localhost:8081/admin/ ou /usuarios
         const admin = require('./routes/admin')
-        const usuarios = require('./routes/usuario')
+        const usuarios = require('./routes/usuario');
+    
 
 //configs
-    //session e flash:
+    //session, passport e flash:
             app.use(session({
                 secret: "senha",
                 resave: true,
                 saveUninitialized: true
             }));
+
+            app.use(passport.initialize())
+            app.use(passport.session())
 
             app.use(flash());
     
@@ -30,6 +38,9 @@
                 //res.locals cria uma   varivel global
                 res.locals.success_msg = req.flash("success_msg");
                 res.locals.error_msg = req.flash("error_msg");
+                res.locals.error = req.flash("error");
+                res.locals.user = req.user || null;
+                res.locals.eAdmin = req.eAdmin || null;
                 next();
             })
             
