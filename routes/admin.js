@@ -2,8 +2,8 @@ const router = require('express').Router(); //Usamos o componente Router() para 
 //Eh dessa forma que se usa um model vinculado ao mongodb que está externo ao arquivo principal:
     const mongoose = require('mongoose');
     require('../models/Categoria');
-    require('../models/Postagem')
     const Categoria = mongoose.model('categorias');
+    require('../models/Postagem')
     const Postagem = mongoose.model('postagens');
 //em vez de app.get usaremos router
 router.get('/', (req, res) => {

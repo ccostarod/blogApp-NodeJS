@@ -11,8 +11,9 @@
     const Postagem = mongoose.model('postagens')
     require("./models/Categoria")
     const Categoria = mongoose.model('categorias')
-    //Ao conectarmos um grupo de rotas ao app.js, criamos um prefixo, nesse caso 'admin', portanto, para acessar as rotas utilizamos: http://localhost:8081/admin/
+    //Ao conectarmos um grupo de rotas ao app.js, criamos um prefixo, nesse caso 'admin' e 'usuarios', portanto, para acessar as rotas utilizamos: http://localhost:8081/admin/ ou /usuarios
         const admin = require('./routes/admin')
+        const usuarios = require('./routes/usuario')
 
 //configs
     //session e flash:
@@ -52,7 +53,10 @@
         
 //rotas
     //rotas com prefixo admin
-    app.use('/admin', admin);
+        app.use('/admin', admin);
+    //rotas com prefixo usuarios
+        app.use('/usuarios', usuarios)
+
     app.get('/', (req,res) => {
         Postagem.find().lean().populate("categoria").sort({data: "desc"}).then((postagens)=>{
             res.render('index', {postagens: postagens})
